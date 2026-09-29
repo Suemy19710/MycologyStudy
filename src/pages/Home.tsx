@@ -29,7 +29,7 @@ export default function Home() {
               ),
               vi: (
                 <>
-                  Thế giới ẩn giấu của <em>nấm</em>, từng đĩa một.
+                  Thế giới ẩn giấu của <em>nấm</em>, từng bước một.
                 </>
               ),
             })}
