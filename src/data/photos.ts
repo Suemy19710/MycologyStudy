@@ -1,29 +1,31 @@
-import type {L} from '../i18n/LanguageContext'   
+// Real photos used on the site. All come from Wikimedia Commons under open licences.
+// The site loads them directly from Wikimedia, so an internet connection is needed.
+// To use your own lab photo instead: put the file in /public/photos/ and set `src: '/photos/your-file.jpg'`.
+import type { L } from '../i18n/LanguageContext'
 
 export interface Photo {
-    file?: string // Wikimedia Commons file name (without "File:")
-    src?: string // or a local path such as /photos/my-plate.jpg
-    alt: L
-    caption: L
-    author: string
-    license: string
-    ratio?: string // force a shape, e.g. '960 / 222' for a very wide image
-    fit?: 'cover' | 'contain' // 'contain' never crops (use for images with labels)
+  file?: string // Wikimedia Commons file name (without "File:")
+  src?: string // or a local path such as /photos/my-plate.jpg
+  alt: L
+  caption: L
+  author: string
+  license: string
+  ratio?: string // force a shape, e.g. '960 / 222' for a very wide image
+  fit?: 'cover' | 'contain' // 'contain' never crops (use for images with labels)
 }
 
+// Builds an image URL from a Commons file name. `width` asks Wikimedia for a smaller copy.
 export function photoUrl(p: Photo, width = 960) {
-    if (p.src) {
-        return p.src
-    }
-    return `https://commons.wikimedia.org/wiki/Special:FilePath/${encodeURIComponent(p.file ?? '')}?width=${width}`
+  if (p.src) return p.src
+  return `https://commons.wikimedia.org/wiki/Special:FilePath/${encodeURIComponent(p.file ?? '')}?width=${width}`
 }
 
 export function photoPage(p: Photo) {
-    return p.file ? `https://commons.wikimedia.org/wiki/File:${encodeURIComponent(p.file.replace(/ /g, '_'))}` : undefined
+  return p.file ? `https://commons.wikimedia.org/wiki/File:${encodeURIComponent(p.file.replace(/ /g, '_'))}` : undefined
 }
 
 export const photos = {
-    mouldyBread: {
+  mouldyBread: {
     file: 'Mouldy bread.jpg',
     alt: { en: 'Slices of bread covered in fuzzy mould', vi: 'Lát bánh mì phủ đầy mốc xốp' },
     caption: { en: 'Mould on bread after three days in a bread bin.', vi: 'Mốc trên bánh mì sau ba ngày để trong hộp.' },
@@ -163,4 +165,25 @@ export const photos = {
     ratio: '960 / 222',
     fit: 'contain',
   },
-} satisfies Record<string, Photo>   
+  fumigatusMicro: {
+    file: 'Aspergillus fumigatus from microscope.jpg',
+    alt: { en: 'Aspergillus fumigatus spore heads under the microscope', vi: 'Đầu bào tử Aspergillus fumigatus dưới kính hiển vi' },
+    caption: { en: 'Aspergillus fumigatus under the microscope: spore heads with chains of conidia.', vi: 'Aspergillus fumigatus dưới kính hiển vi: đầu bào tử với các chuỗi bào tử đính.' },
+    author: 'Szarysweter',
+    license: 'CC BY 4.0',
+  },
+  yeastColonies: {
+    file: 'Saccharomyces cerevisiae YGC colonies 50.jpg',
+    alt: { en: 'Cream-coloured round yeast colonies on agar', vi: 'Khuẩn lạc nấm men tròn màu kem trên thạch' },
+    caption: { en: 'Saccharomyces cerevisiae colonies on agar: smooth, cream and moist.', vi: 'Khuẩn lạc Saccharomyces cerevisiae trên thạch: nhẵn, màu kem, ẩm.' },
+    author: 'A doubt',
+    license: 'CC BY-SA 4.0',
+  },
+  yeastSEM: {
+    file: 'Saccharomyces cerevisiae SEM.jpg',
+    alt: { en: 'Yeast cells seen with an electron microscope, some with bud scars', vi: 'Tế bào nấm men dưới kính hiển vi điện tử, một số có sẹo chồi' },
+    caption: { en: 'Yeast cells under an electron microscope. Round marks are scars left by earlier buds.', vi: 'Tế bào nấm men dưới kính hiển vi điện tử. Các vết tròn là sẹo do các chồi trước để lại.' },
+    author: 'Mogana Das Murtey, Patchamuthu Ramasamy',
+    license: 'CC BY 3.0',
+  },
+} satisfies Record<string, Photo>
