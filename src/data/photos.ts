@@ -186,4 +186,14 @@ export const photos = {
     author: 'Mogana Das Murtey, Patchamuthu Ramasamy',
     license: 'CC BY 3.0',
   },
+  fusariumWilt: {
+    file: 'Tomaquera amb Fusarium HV.JPG',
+    alt: { en: 'Tomato plant with a brown stem and wilted leaves', vi: 'Cây cà chua có thân hóa nâu và lá héo rũ' },
+    caption: {
+      en: 'Tomato plant with Fusarium wilt, caused by Fusarium oxysporum.',
+      vi: 'Cây cà chua bị bệnh héo Fusarium do nấm Fusarium oxysporum gây ra.',
+    },
+    author: 'Victor M. Vicente Selvas',
+    license: 'CC BY-SA 3.0',
+  },
 } satisfies Record<string, Photo>

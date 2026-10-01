@@ -1,29 +1,47 @@
 import { useEffect, useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
+import Cite from '../components/Cite'
 import { Analogy, Toggle } from '../components/ui'
 import Photo from '../components/Photo'
-import { examples, ranks, termGroups, terms, type TermGroup } from '../data/taxonomy'
+import { examples, ranks, termGroups, terms, tierLabels, type RankKey, type TermGroup } from '../data/taxonomy'
 import { useLang } from '../i18n/LanguageContext'
 
-// Shows a name with its standard rank ending highlighted, e.g. Eurotia|les.
-function NameWithEnding({ name, ending, italic }: { name: string; ending?: string; italic: boolean }) {
+// Rank words inside a name stay upright, e.g. Fusarium oxysporum f. sp. lycopersici.
+const CONNECTOR = / (subsp\.|var\.|f\. sp\.|f\.|sect\.) /
+
+// Shows a scientific name the ICNafp way: italic at every rank, connectors upright,
+// and the standard rank ending highlighted, e.g. Eurotia|les.
+function SciName({ name, ending, italic }: { name: string; ending?: string; italic: boolean }) {
+  if (!italic) return <>{name}</>
+  const parts = name.split(CONNECTOR) // odd indexes are connectors
   const suffix = ending?.replace('-', '')
-  const content =
-    suffix && name.endsWith(suffix) ? (
-      <>
-        {name.slice(0, -suffix.length)}
-        <mark>{suffix}</mark>
-      </>
-    ) : (
-      name
-    )
-  return italic ? <i>{content}</i> : <>{content}</>
+  return (
+    <>
+      {parts.map((part, i) => {
+        if (i % 2 === 1) return <span key={i}> {part} </span>
+        const last = i === parts.length - 1
+        const content =
+          last && suffix && part.endsWith(suffix) ? (
+            <>
+              {part.slice(0, -suffix.length)}
+              <mark>{suffix}</mark>
+            </>
+          ) : (
+            part
+          )
+        return <i key={i}>{content}</i>
+      })}
+    </>
+  )
 }
+
+type RankView = 'main' | 'all'
 
 export default function NamesRanks() {
   const { t, lang } = useLang()
   const [exampleKey, setExampleKey] = useState(examples[0].key)
-  const [selected, setSelected] = useState(6) // start on "Species"
+  const [selected, setSelected] = useState<RankKey>('species')
+  const [view, setView] = useState<RankView>('main')
   const [query, setQuery] = useState('')
   const [group, setGroup] = useState<TermGroup | 'all'>('all')
 
@@ -32,9 +50,22 @@ export default function NamesRanks() {
   }, [lang])
 
   const example = examples.find((e) => e.key === exampleKey) ?? examples[0]
-  const rank = ranks[selected]
-  const isStrain = selected === ranks.length - 1
-  const isItalic = (i: number) => i === 5 || i === 6 // genus and species are written in italics
+  // Ranks this fungus uses; the main view keeps only the principal ranks plus strain.
+  const visible = ranks.filter(
+    (r) => example.names[r.key] && (view === 'all' || r.tier === 'principal' || r.tier === 'informal'),
+  )
+  const current = visible.some((r) => r.key === selected) ? selected : 'species'
+  const rank = ranks.find((r) => r.key === current)!
+  const isStrain = rank.tier === 'informal'
+  const italic = (key: RankKey) => key !== 'strain' // ICNafp: scientific names are italic at every rank
+
+  // Main ranks narrow step by step; the optional ranks sit just inside the rank above them.
+  const widths = visible.map((r, i) => {
+    const principalAbove = visible.slice(0, i + 1).filter((v) => v.tier === 'principal').length
+    const width = 100 - Math.max(0, principalAbove - 1) * 6
+    if (r.tier === 'principal' || r.tier === 'infraspecific') return width // long names below species need the room
+    return width - 5
+  })
 
   // Search both languages, so "chủng" and "strain" both work.
   const filtered = useMemo(() => {
@@ -75,27 +106,39 @@ export default function NamesRanks() {
           </p>
 
           <div className="lab">
-            <Toggle
-              label={t({ en: 'Choose an example fungus', vi: 'Chọn loài nấm ví dụ' })}
-              value={exampleKey}
-              onChange={setExampleKey}
-              options={examples.map((e) => ({ value: e.key, label: t(e.label) }))}
-            />
+            <div className="lab-controls">
+              <Toggle
+                label={t({ en: 'Choose an example fungus', vi: 'Chọn loài nấm ví dụ' })}
+                value={exampleKey}
+                onChange={setExampleKey}
+                options={examples.map((e) => ({ value: e.key, label: t(e.label) }))}
+              />
+              <Toggle
+                label={t({ en: 'Which ranks to show', vi: 'Hiển thị bậc nào' })}
+                value={view}
+                onChange={setView}
+                options={[
+                  { value: 'main', label: t({ en: 'Main ranks', vi: 'Bậc chính' }) },
+                  { value: 'all', label: t({ en: 'All ranks', vi: 'Tất cả các bậc' }) },
+                ]}
+              />
+            </div>
 
             <div className="ladder-wrap">
               <ol className="ladder">
-                {ranks.map((r, i) => (
-                  <li key={r.rank.en}>
+                {visible.map((r, i) => (
+                  <li key={r.key}>
                     <button
                       type="button"
-                      className={`rung ${i === selected ? 'on' : ''} ${i === ranks.length - 1 ? 'strain-rung' : ''}`}
-                      style={{ width: `${100 - i * 9}%` }}
-                      aria-pressed={i === selected}
-                      onClick={() => setSelected(i)}
+                      className={`rung tier-${r.tier} ${r.key === current ? 'on' : ''} ${r.tier === 'informal' ? 'strain-rung' : ''}`}
+                      style={{ width: `${widths[i]}%` }}
+                      aria-pressed={r.key === current}
+                      aria-label={`${t(r.rank)} (${t(tierLabels[r.tier])}): ${example.names[r.key]}`}
+                      onClick={() => setSelected(r.key)}
                     >
                       <span className="rung-rank mono">{t(r.rank)}</span>
                       <span className="rung-name">
-                        <NameWithEnding name={example.names[i]} ending={r.ending} italic={isItalic(i)} />
+                        <SciName name={example.names[r.key]!} ending={r.ending} italic={italic(r.key)} />
                       </span>
                     </button>
                   </li>
@@ -104,9 +147,12 @@ export default function NamesRanks() {
 
               <div className="rank-detail" aria-live="polite">
                 <Photo photo={example.photo} ratio="16 / 10" />
-                <span className="mono muted-label">{t(rank.rank)}</span>
+                <span className="mono muted-label">
+                  {t(rank.rank)} · {t(tierLabels[rank.tier])}
+                </span>
                 <h3>
-                  <NameWithEnding name={example.names[selected]} ending={rank.ending} italic={isItalic(selected)} />
+                  <SciName name={example.names[current]!} ending={rank.ending} italic={italic(current)} />
+                  {current === 'species' && <span className="authority"> {example.authority}</span>}
                 </h3>
                 <p>{t(rank.what)}</p>
                 {rank.ending && (
@@ -120,6 +166,28 @@ export default function NamesRanks() {
             </div>
           </div>
         </section>
+
+        <p className="prose above-kingdom">
+          <span>
+            {t({
+              en: (
+                <>
+                  <strong>Above the kingdom.</strong> Fungi belong to the Eukarya, the living things whose cells have a
+                  nucleus. Within it they share a branch (Opisthokonta) with animals, so fungi are closer relatives of
+                  animals than of plants. These are groups on the family tree, not ranks in the ladder.
+                </>
+              ),
+              vi: (
+                <>
+                  <strong>Phía trên giới.</strong> Nấm thuộc nhóm Sinh vật nhân thực (Eukarya), gồm các sinh vật có tế bào
+                  mang nhân. Trong đó, nấm cùng nhánh Opisthokonta với động vật, nên nấm có họ hàng gần với động vật hơn
+                  là thực vật. Đây là các nhánh trên cây phát sinh, không phải các bậc trong thang phân loại.
+                </>
+              ),
+            })}{' '}
+            <Cite ids={['baldauf1993']} />
+          </span>
+        </p>
 
         <Analogy label={t({ en: 'Think of it as', vi: 'Hãy hình dung' })}>
           {t({
@@ -176,6 +244,40 @@ export default function NamesRanks() {
                 vi: (
                   <>
                     Sau lần nhắc đầu tiên, tên chi có thể viết tắt: <i>A. fumigatus</i>.
+                  </>
+                ),
+              })}
+            </li>
+            <li>
+              {t({
+                en: (
+                  <>
+                    Under the naming Code that covers fungi (ICNafp), names at <strong>every</strong> rank are italic:{' '}
+                    <i>Eurotiales</i>, <i>Ascomycota</i>. Rank words such as sect., var. and f. sp. stay upright:{' '}
+                    <i>Fusarium oxysporum</i> f. sp. <i>lycopersici</i>.
+                  </>
+                ),
+                vi: (
+                  <>
+                    Theo Bộ luật danh pháp quốc tế cho tảo, nấm và thực vật (ICNafp), tên ở <strong>mọi</strong> bậc đều
+                    viết nghiêng: <i>Eurotiales</i>, <i>Ascomycota</i>. Các từ chỉ bậc như sect., var. và f. sp. viết
+                    đứng: <i>Fusarium oxysporum</i> f. sp. <i>lycopersici</i>.
+                  </>
+                ),
+              })}
+            </li>
+            <li>
+              {t({
+                en: (
+                  <>
+                    A formal name can be followed by its <strong>authority</strong>, the person who described it, in
+                    upright letters: <i>Aspergillus fumigatus</i> Fresen.
+                  </>
+                ),
+                vi: (
+                  <>
+                    Tên chính thức có thể kèm theo <strong>tác giả</strong>, người đã mô tả nó, viết đứng:{' '}
+                    <i>Aspergillus fumigatus</i> Fresen.
                   </>
                 ),
               })}

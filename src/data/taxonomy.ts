@@ -2,14 +2,45 @@
 import type { L } from '../i18n/LanguageContext'
 import { photos, type Photo } from './photos'
 
+// How formal a level is. Principal ranks are the ones every fungus has;
+// secondary ranks are optional steps in between; strain is outside the naming Code.
+export type RankTier = 'principal' | 'secondary' | 'infraspecific' | 'informal'
+
+export type RankKey =
+  | 'kingdom'
+  | 'subkingdom'
+  | 'phylum'
+  | 'subphylum'
+  | 'class'
+  | 'subclass'
+  | 'order'
+  | 'family'
+  | 'genus'
+  | 'section'
+  | 'species'
+  | 'infraspecific'
+  | 'strain'
+
 export interface Rank {
+  key: RankKey
+  tier: RankTier
   rank: L
   what: L // plain-language explanation
-  ending?: string // standard name ending for fungi at this rank
+  ending?: string // standard name ending for fungi at this rank (ICNafp)
 }
 
+export const tierLabels: Record<RankTier, L> = {
+  principal: { en: 'Main rank', vi: 'Bậc chính' },
+  secondary: { en: 'Secondary rank', vi: 'Bậc phụ' },
+  infraspecific: { en: 'Below species', vi: 'Dưới loài' },
+  informal: { en: 'Not a formal rank', vi: 'Không phải bậc chính thức' },
+}
+
+// Ordered from the top of the hierarchy down.
 export const ranks: Rank[] = [
   {
+    key: 'kingdom',
+    tier: 'principal',
     rank: { en: 'Kingdom', vi: 'Giới' },
     what: {
       en: 'The biggest group. All fungi belong to kingdom Fungi, separate from plants and animals.',
@@ -17,6 +48,17 @@ export const ranks: Rank[] = [
     },
   },
   {
+    key: 'subkingdom',
+    tier: 'secondary',
+    rank: { en: 'Subkingdom', vi: 'Phân giới' },
+    what: {
+      en: 'An optional step between kingdom and phylum. Dikarya joins the two largest phyla, whose cells can carry two separate nuclei for part of their life.',
+      vi: 'Một bậc tùy chọn giữa giới và ngành. Dikarya gộp hai ngành lớn nhất, có tế bào mang hai nhân riêng biệt trong một phần vòng đời.',
+    },
+  },
+  {
+    key: 'phylum',
+    tier: 'principal',
     rank: { en: 'Phylum', vi: 'Ngành' },
     ending: '-mycota',
     what: {
@@ -25,11 +67,35 @@ export const ranks: Rank[] = [
     },
   },
   {
+    key: 'subphylum',
+    tier: 'secondary',
+    rank: { en: 'Subphylum', vi: 'Phân ngành' },
+    ending: '-mycotina',
+    what: {
+      en: 'Splits a phylum into its main lineages: for example Pezizomycotina (most moulds) and Saccharomycotina (budding yeasts) inside Ascomycota.',
+      vi: 'Chia một ngành thành các dòng chính: ví dụ Pezizomycotina (phần lớn nấm mốc) và Saccharomycotina (nấm men nảy chồi) trong ngành Ascomycota.',
+    },
+  },
+  {
+    key: 'class',
+    tier: 'principal',
     rank: { en: 'Class', vi: 'Lớp' },
     ending: '-mycetes',
     what: { en: 'A large group of related orders within a phylum.', vi: 'Một nhóm lớn gồm các bộ có họ hàng với nhau trong một ngành.' },
   },
   {
+    key: 'subclass',
+    tier: 'secondary',
+    rank: { en: 'Subclass', vi: 'Phân lớp' },
+    ending: '-mycetidae',
+    what: {
+      en: 'An optional step inside a very large class. Many classes do not use it at all.',
+      vi: 'Một bậc tùy chọn bên trong một lớp rất lớn. Nhiều lớp hoàn toàn không dùng bậc này.',
+    },
+  },
+  {
+    key: 'order',
+    tier: 'principal',
     rank: { en: 'Order', vi: 'Bộ' },
     ending: '-ales',
     what: {
@@ -38,6 +104,8 @@ export const ranks: Rank[] = [
     },
   },
   {
+    key: 'family',
+    tier: 'principal',
     rank: { en: 'Family', vi: 'Họ' },
     ending: '-aceae',
     what: {
@@ -46,6 +114,8 @@ export const ranks: Rank[] = [
     },
   },
   {
+    key: 'genus',
+    tier: 'principal',
     rank: { en: 'Genus', vi: 'Chi' },
     what: {
       en: 'A group of closely related species. It is the first word of the scientific name and always starts with a capital letter.',
@@ -53,6 +123,17 @@ export const ranks: Rank[] = [
     },
   },
   {
+    key: 'section',
+    tier: 'secondary',
+    rank: { en: 'Section', vi: 'Nhánh (section)' },
+    what: {
+      en: 'A step between genus and species, used in big genera such as Aspergillus. Species in one section look almost identical, so labs often identify a mould "to section" first.',
+      vi: 'Một bậc giữa chi và loài, dùng trong các chi lớn như Aspergillus. Các loài trong cùng một section trông gần như giống hệt nhau, nên phòng thí nghiệm thường định danh nấm mốc "đến mức section" trước.',
+    },
+  },
+  {
+    key: 'species',
+    tier: 'principal',
     rank: { en: 'Species', vi: 'Loài' },
     what: {
       en: 'The kind of fungus. Its name has two parts, the genus plus a second word, written in italics.',
@@ -60,10 +141,21 @@ export const ranks: Rank[] = [
     },
   },
   {
+    key: 'infraspecific',
+    tier: 'infraspecific',
+    rank: { en: 'Below species', vi: 'Dưới loài' },
+    what: {
+      en: 'Finer groups inside one species. Variety (var.) and form (f.) are covered by the naming Code. Forma specialis (f. sp.) names strains that attack one host plant; plant pathologists use it widely, but the Code does not regulate it.',
+      vi: 'Các nhóm nhỏ hơn bên trong một loài. Thứ (var.) và dạng (f.) thuộc phạm vi của Bộ luật danh pháp. Dạng chuyên hóa (f. sp.) chỉ các chủng tấn công một loài cây chủ; giới bệnh học thực vật dùng rất rộng rãi, nhưng Bộ luật không quy định nó.',
+    },
+  },
+  {
+    key: 'strain',
+    tier: 'informal',
     rank: { en: 'Strain', vi: 'Chủng' },
     what: {
-      en: 'One living sample of a species, kept in a collection with its own ID. Strain is not an official rank, but it is the level labs actually work with.',
-      vi: 'Một mẫu sống của loài, được lưu giữ trong bộ sưu tập với mã số riêng. Chủng không phải là bậc phân loại chính thức, nhưng là cấp độ mà phòng thí nghiệm thực sự làm việc.',
+      en: 'One living sample of a species, kept in a collection with its own ID. Strain is not a rank and is not governed by the naming Code: the culture collection assigns the ID. Even so, it is the level labs actually work with.',
+      vi: 'Một mẫu sống của loài, được lưu giữ trong bộ sưu tập với mã số riêng. Chủng không phải là bậc phân loại và không chịu sự điều chỉnh của Bộ luật danh pháp: bộ sưu tập giống cấp mã số. Dù vậy, đây là cấp độ mà phòng thí nghiệm thực sự làm việc.',
     },
   },
 ]
@@ -72,8 +164,9 @@ export interface ExampleFungus {
   key: string
   label: L
   photo: Photo
-  // One name per rank, in the same order as `ranks`.
-  names: string[]
+  // The name at each rank. Ranks this fungus does not use are left out.
+  names: Partial<Record<RankKey, string>>
+  authority: string // who described the species, and when
   strainNote: L
 }
 
@@ -82,7 +175,21 @@ export const examples: ExampleFungus[] = [
     key: 'aspergillus',
     label: { en: 'A mould', vi: 'Nấm mốc' },
     photo: photos.fumigatusColony,
-    names: ['Fungi', 'Ascomycota', 'Eurotiomycetes', 'Eurotiales', 'Aspergillaceae', 'Aspergillus', 'Aspergillus fumigatus', 'Af293'],
+    names: {
+      kingdom: 'Fungi',
+      subkingdom: 'Dikarya',
+      phylum: 'Ascomycota',
+      subphylum: 'Pezizomycotina',
+      class: 'Eurotiomycetes',
+      subclass: 'Eurotiomycetidae',
+      order: 'Eurotiales',
+      family: 'Aspergillaceae',
+      genus: 'Aspergillus',
+      section: 'Aspergillus sect. Fumigati',
+      species: 'Aspergillus fumigatus',
+      strain: 'Af293',
+    },
+    authority: 'Fresen. 1863',
     strainNote: {
       en: 'A well-known reference strain, originally from a patient.',
       vi: 'Một chủng tham chiếu nổi tiếng, ban đầu phân lập từ bệnh nhân.',
@@ -92,7 +199,19 @@ export const examples: ExampleFungus[] = [
     key: 'yeast',
     label: { en: "Baker's yeast", vi: 'Nấm men bánh mì' },
     photo: photos.yeastCells,
-    names: ['Fungi', 'Ascomycota', 'Saccharomycetes', 'Saccharomycetales', 'Saccharomycetaceae', 'Saccharomyces', 'Saccharomyces cerevisiae', 'S288C'],
+    names: {
+      kingdom: 'Fungi',
+      subkingdom: 'Dikarya',
+      phylum: 'Ascomycota',
+      subphylum: 'Saccharomycotina',
+      class: 'Saccharomycetes',
+      order: 'Saccharomycetales',
+      family: 'Saccharomycetaceae',
+      genus: 'Saccharomyces',
+      species: 'Saccharomyces cerevisiae',
+      strain: 'S288C',
+    },
+    authority: '(Desm.) Meyen 1838',
     strainNote: {
       en: 'A laboratory strain used in thousands of genetics studies.',
       vi: 'Một chủng phòng thí nghiệm được dùng trong hàng nghìn nghiên cứu di truyền.',
@@ -102,10 +221,47 @@ export const examples: ExampleFungus[] = [
     key: 'mushroom',
     label: { en: 'Button mushroom', vi: 'Nấm mỡ' },
     photo: photos.buttonMushroom,
-    names: ['Fungi', 'Basidiomycota', 'Agaricomycetes', 'Agaricales', 'Agaricaceae', 'Agaricus', 'Agaricus bisporus', 'H97'],
+    names: {
+      kingdom: 'Fungi',
+      subkingdom: 'Dikarya',
+      phylum: 'Basidiomycota',
+      subphylum: 'Agaricomycotina',
+      class: 'Agaricomycetes',
+      subclass: 'Agaricomycetidae',
+      order: 'Agaricales',
+      family: 'Agaricaceae',
+      genus: 'Agaricus',
+      species: 'Agaricus bisporus',
+      strain: 'H97',
+    },
+    authority: '(J.E. Lange) Imbach 1946',
     strainNote: {
       en: 'A strain whose full DNA was read to study the mushroom.',
       vi: 'Một chủng đã được giải trình tự toàn bộ DNA để nghiên cứu loài nấm này.',
+    },
+  },
+  {
+    key: 'fusarium',
+    label: { en: 'A plant pathogen', vi: 'Nấm gây bệnh cây' },
+    photo: photos.fusariumWilt,
+    names: {
+      kingdom: 'Fungi',
+      subkingdom: 'Dikarya',
+      phylum: 'Ascomycota',
+      subphylum: 'Pezizomycotina',
+      class: 'Sordariomycetes',
+      subclass: 'Hypocreomycetidae',
+      order: 'Hypocreales',
+      family: 'Nectriaceae',
+      genus: 'Fusarium',
+      species: 'Fusarium oxysporum',
+      infraspecific: 'Fusarium oxysporum f. sp. lycopersici',
+      strain: '4287',
+    },
+    authority: 'Schltdl. 1824',
+    strainNote: {
+      en: 'A reference strain for tomato wilt research. Its full genome was published in 2010.',
+      vi: 'Một chủng tham chiếu trong nghiên cứu bệnh héo cà chua. Toàn bộ hệ gen của nó được công bố năm 2010.',
     },
   },
 ]
@@ -173,6 +329,33 @@ export const terms: Term[] = [
       vi: 'Từ thứ hai trong tên loài. Nó chỉ có nghĩa khi đi cùng tên chi.',
     },
     example: { en: '"fumigatus" in Aspergillus fumigatus', vi: '"fumigatus" trong Aspergillus fumigatus' },
+  },
+  {
+    term: { en: 'Authority (author citation)', vi: 'Tác giả (trích dẫn tác giả)' },
+    group: 'naming',
+    meaning: {
+      en: 'The name of the scientist who described a taxon, written after it in upright letters. A name in brackets is the person who first described the species in another genus.',
+      vi: 'Tên nhà khoa học đã mô tả đơn vị phân loại, viết đứng (không nghiêng) ngay sau tên. Tên trong ngoặc là người đầu tiên mô tả loài đó trong một chi khác.',
+    },
+    example: { en: 'Saccharomyces cerevisiae (Desm.) Meyen', vi: 'Saccharomyces cerevisiae (Desm.) Meyen' },
+  },
+  {
+    term: { en: 'Section (sect.)', vi: 'Section (sect.)' },
+    group: 'naming',
+    meaning: {
+      en: 'A rank between genus and species, used to sort a large genus into groups of near-identical species.',
+      vi: 'Một bậc giữa chi và loài, dùng để chia một chi lớn thành các nhóm loài gần như giống hệt nhau.',
+    },
+    example: { en: 'Aspergillus sect. Fumigati', vi: 'Aspergillus sect. Fumigati' },
+  },
+  {
+    term: { en: 'Forma specialis (f. sp.)', vi: 'Dạng chuyên hóa (f. sp.)' },
+    group: 'naming',
+    meaning: {
+      en: 'A group of strains within one species that can only infect a particular host plant. Widely used in plant pathology, but not regulated by the naming Code.',
+      vi: 'Một nhóm chủng trong cùng một loài chỉ có thể lây nhiễm một loài cây chủ nhất định. Được dùng rộng rãi trong bệnh học thực vật nhưng không do Bộ luật danh pháp quy định.',
+    },
+    example: { en: 'Fusarium oxysporum f. sp. lycopersici (tomato)', vi: 'Fusarium oxysporum f. sp. lycopersici (cà chua)' },
   },
   {
     term: { en: 'sp. and spp.', vi: 'sp. và spp.' },

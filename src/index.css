@@ -1008,3 +1008,19 @@ footer::after {
   a { color: inherit; text-decoration: none; }
   .card, .lab, .profile-section { break-inside: avoid; }
 }
+
+/* ============ Names & ranks: tiers of the hierarchy ============ */
+.lab-controls { display: flex; flex-wrap: wrap; gap: 10px 16px; justify-content: space-between; }
+/* Optional ranks: quieter, so the main ladder still reads at a glance */
+.rung.tier-secondary { background: var(--bg); padding-block: 5px; }
+.rung.tier-secondary .rung-name { font-size: 0.92rem; }
+.rung.tier-secondary .rung-rank { font-style: italic; }
+.rung.tier-infraspecific { border-style: dashed; background: var(--bg); }
+.rung.tier-secondary.on, .rung.tier-infraspecific.on { background: var(--accent); }
+.rank-detail h3 .authority { font-family: var(--body); font-size: 0.95rem; font-weight: 400; color: var(--muted); white-space: nowrap; }
+.above-kingdom { font-size: 0.95rem; color: var(--muted); border-left: 2px solid var(--line); padding-left: 14px; }
+.above-kingdom strong { color: var(--ink); }
+@media (max-width: 760px) {
+  .ladder li:has(.tier-secondary), .ladder li:has(.tier-infraspecific) { justify-content: flex-end; }
+  .rung.tier-secondary, .rung.tier-infraspecific { width: calc(100% - 18px) !important; }
+}
