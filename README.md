@@ -81,16 +81,3 @@ To use your own photo (for example, a plate from your lab):
 1. Put the file in `public/photos/`, e.g. `public/photos/my-plate.jpg`.
 2. In `src/data/photos.ts`, replace `file: '...'` with `src: '/photos/my-plate.jpg'` and update the caption, author and licence.
 
-## How to add a new topic page
-
-1. Add an entry to `src/data/topics.ts` (pick a `slug`, e.g. `reproduction`).
-2. Create `src/pages/topics/Reproduction.tsx` with the content.
-3. In `src/App.tsx`, import it and add `reproduction: <Reproduction />` to `topicContent`.
-
-The side menu, the home page cards and the Previous/Next buttons update automatically.
-
-## Publishing online
-
-`npm run build` creates a `dist` folder you can upload to Netlify, Vercel or GitHub Pages.
-Because the site uses page URLs like `/learn/ecology`, tell the host to send every URL to `index.html`
-(on Netlify: add a file `public/_redirects` containing `/*  /index.html  200`).
