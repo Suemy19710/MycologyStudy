@@ -153,7 +153,6 @@ export default function HyphaeDish() {
       aria-label={t({ en: 'Fungal threads growing across a petri dish', vi: 'Sợi nấm lan rộng trên đĩa petri' })}
     >
       <canvas ref={canvasRef} />
-      <span className="dish-label">{t({ en: 'day 3 · 25 °C · malt agar', vi: 'ngày 3 · 25 °C · thạch mạch nha' })}</span>
     </div>
   )
 }
