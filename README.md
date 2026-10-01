@@ -1,4 +1,4 @@
-# Meet the Fungi · Làm quen với Nấm
+# Meet the Fungi 
 
 A beginner-friendly website that explains mycology (the study of fungi), in English and Vietnamese.
 Built with React, TypeScript, Vite and React Router.
@@ -74,10 +74,3 @@ Every source is listed once in `src/data/references.ts` with an `id`, e.g. `scho
 
 All photos come from [Wikimedia Commons](https://commons.wikimedia.org) under open licences
 (public domain, CC0, CC BY or CC BY-SA). The author and licence are shown under every photo, which is what these licences require.
-Keep the credit line if you reuse a photo.
-
-To use your own photo (for example, a plate from your lab):
-
-1. Put the file in `public/photos/`, e.g. `public/photos/my-plate.jpg`.
-2. In `src/data/photos.ts`, replace `file: '...'` with `src: '/photos/my-plate.jpg'` and update the caption, author and licence.
-
