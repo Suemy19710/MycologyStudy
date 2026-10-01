@@ -8,7 +8,7 @@ import { LanguageProvider } from './i18n/LanguageContext'
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
     <LanguageProvider>
-      <BrowserRouter>
+      <BrowserRouter basename={import.meta.env.BASE_URL}>
         <App />
       </BrowserRouter>
     </LanguageProvider>
