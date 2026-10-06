@@ -2,7 +2,7 @@ import { useEffect } from 'react'
 import { Link, useParams } from 'react-router-dom'
 import Cite, { Sources } from '../components/Cite'
 import Photo, { PhotoRow } from '../components/Photo'
-import { findSpecies, sectionInfo, species } from '../data/species'
+import { cbsCatalogue, findSpecies, sectionInfo, species } from '../data/species'
 import { useLang } from '../i18n/LanguageContext'
 import NotFound from './NotFound'
 
@@ -61,6 +61,9 @@ export default function SpeciesProfile() {
             {t(s.label)}
           </button>
         ))}
+        <button type="button" onClick={() => jumpTo('strains')}>
+          {t({ en: 'Strains', vi: 'Chủng' })}
+        </button>
       </nav>
 
       <div className="profile-sections">
@@ -91,6 +94,42 @@ export default function SpeciesProfile() {
           )
         })}
       </div>
+
+      <section id="sec-strains" className="profile-section strains-section">
+        <div className="ps-head">
+          <span className="field">{t({ en: 'Strains', vi: 'Chủng' })}</span>
+        </div>
+        <h2>
+          {t({
+            en: 'Living cultures of this species, kept and sold by the CBS collection of the Westerdijk Institute.',
+            vi: 'Các mẫu nuôi cấy sống của loài này, được lưu giữ và cung cấp bởi bộ sưu tập CBS của Viện Westerdijk.',
+          })}{' '}
+          <Cite ids={['westerdijk']} />
+        </h2>
+        <ul className="strain-list">
+          {sp.strains.map((st) => (
+            <li key={st.id}>
+              <div className="strain-id">
+                <span className="mono">{st.id}</span>
+                <span className="badge">{t(st.status)}</span>
+              </div>
+              <p>{t(st.note)}</p>
+              {st.otherIds && <p className="mono strain-other">= {st.otherIds}</p>}
+              {st.inCbs && (
+                <a href={cbsCatalogue} target="_blank" rel="noreferrer" className="strain-order">
+                  {t({ en: `Order: search ${st.id} in the CBS catalogue`, vi: `Đặt mua: tìm ${st.id} trong danh mục CBS` })} ↗
+                </a>
+              )}
+            </li>
+          ))}
+        </ul>
+        <a href={cbsCatalogue} target="_blank" rel="noreferrer" className="btn ghost strain-all">
+          {t({ en: `Search all ${sp.name} strains at wi.knaw.nl`, vi: `Tìm tất cả chủng ${sp.name} tại wi.knaw.nl` })} ↗
+        </a>
+        <Link to="/learn/species-and-strain" className="ps-link">
+          {t({ en: 'What is a strain?', vi: 'Chủng là gì?' })} →
+        </Link>
+      </section>
 
       <Sources ids={allRefs} />
 

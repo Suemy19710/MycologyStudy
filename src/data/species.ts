@@ -38,6 +38,18 @@ export interface Section {
   refs: string[] // ids from data/references.ts
 }
 
+// Ordering page of the CBS culture collection (Westerdijk Institute). Strains have no
+// individual URLs there, so links open the catalogue search and the CBS number is shown to search for.
+export const cbsCatalogue = 'https://wi.knaw.nl/fungal_table'
+
+export interface StrainRecord {
+  id: string // e.g. 'CBS 133.61'
+  status: L // ex-type, typical culture, reference strain...
+  note: L
+  otherIds?: string // the same strain in other collections
+  inCbs: boolean // true when the strain can be ordered from the CBS collection
+}
+
 export interface SpeciesProfile {
   slug: string
   name: string // scientific name
@@ -46,6 +58,7 @@ export interface SpeciesProfile {
   tags: L[] // short badges shown at the top
   photo: Photo
   lineage: string[] // kingdom → genus
+  strains: StrainRecord[]
   sections: Record<SectionKey, Section>
 }
 
@@ -62,6 +75,39 @@ export const species: SpeciesProfile[] = [
     ],
     photo: photos.fumigatusColony,
     lineage: ['Fungi', 'Ascomycota', 'Eurotiomycetes', 'Eurotiales', 'Aspergillaceae', 'Aspergillus'],
+    strains: [
+      {
+        id: 'CBS 133.61',
+        status: { en: 'Ex-type', vi: 'Ex-type' },
+        note: {
+          en: 'Living culture of the type (IMI 16152, from a chicken lung, Connecticut, USA). New DNA sequences are compared against it.',
+          vi: 'Mẫu nuôi cấy sống của mẫu chuẩn (IMI 16152, từ phổi gà, Connecticut, Hoa Kỳ). Các trình tự DNA mới được so sánh với chủng này.',
+        },
+        otherIds: 'NRRL 163 = ATCC 1022 = IMI 16152 = NCTC 982',
+        inCbs: true,
+      },
+      {
+        id: 'CBS 144.89',
+        status: { en: 'Typical culture', vi: 'Mẫu nuôi cấy điển hình' },
+        note: { en: 'Shows the usual features of the species.', vi: 'Thể hiện các đặc điểm thông thường của loài.' },
+        inCbs: true,
+      },
+      {
+        id: 'CBS 419.64',
+        status: { en: 'Typical culture', vi: 'Mẫu nuôi cấy điển hình' },
+        note: { en: 'Shows the usual features of the species.', vi: 'Thể hiện các đặc điểm thông thường của loài.' },
+        inCbs: true,
+      },
+      {
+        id: 'Af293',
+        status: { en: 'Genome reference', vi: 'Chủng tham chiếu hệ gen' },
+        note: {
+          en: 'Clinical isolate whose full genome was published in 2005. Ask the collection whether it is available.',
+          vi: 'Chủng phân lập lâm sàng, được công bố toàn bộ bộ gen năm 2005. Hãy hỏi bộ sưu tập xem chủng này có sẵn không.',
+        },
+        inCbs: false,
+      },
+    ],
     sections: {
       identity: {
         summary: {
@@ -84,14 +130,35 @@ export const species: SpeciesProfile[] = [
             },
           },
           {
+            label: { en: 'Described', vi: 'Công bố' },
+            value: {
+              en: 'By Fresenius in 1863 (Beitr. Mykol.: 81). MycoBank number 211776.',
+              vi: 'Bởi Fresenius năm 1863 (Beitr. Mykol.: 81). Số MycoBank 211776.',
+            },
+          },
+          {
+            label: { en: 'Type', vi: 'Mẫu chuẩn' },
+            value: {
+              en: 'IMI 16152, from a chicken lung in Connecticut, USA. The living ex-type culture is CBS 133.61.',
+              vi: 'IMI 16152, từ phổi gà ở Connecticut, Hoa Kỳ. Mẫu nuôi cấy sống ex-type là CBS 133.61.',
+            },
+          },
+          {
+            label: { en: 'Synonyms', vi: 'Tên đồng nghĩa' },
+            value: {
+              en: 'Neosartorya fumigata (the name once used for its sexual form) and Aspergillus neoellipticus.',
+              vi: 'Neosartorya fumigata (tên từng dùng cho dạng hữu tính) và Aspergillus neoellipticus.',
+            },
+          },
+          {
             label: { en: 'Close relatives', vi: 'Họ hàng gần' },
             value: {
-              en: 'Belongs to Aspergillus section Fumigati, together with look-alikes such as A. lentulus.',
-              vi: 'Thuộc nhóm Aspergillus section Fumigati, cùng các loài trông giống như A. lentulus.',
+              en: 'Subgenus Fumigati, section Fumigati, series Fumigati. Closely related to A. fischeri; look-alikes include A. lentulus.',
+              vi: 'Phân chi Fumigati, section Fumigati, series Fumigati. Có quan hệ gần với A. fischeri; các loài trông giống bao gồm A. lentulus.',
             },
           },
         ],
-        refs: ['nierman2005', 'samson2014'],
+        refs: ['nierman2005', 'samson2014', 'westerdijk'],
       },
       morphology: {
         summary: {
@@ -102,27 +169,34 @@ export const species: SpeciesProfile[] = [
           {
             label: { en: 'By eye', vi: 'Bằng mắt thường' },
             value: {
-              en: 'Velvety to powdery, blue-green to grey-green colony with a white edge. Grows fast, covering a plate within days.',
-              vi: 'Khuẩn lạc mịn như nhung đến dạng bột, xanh lam-lục đến xám lục, mép trắng. Mọc nhanh, phủ kín đĩa trong vài ngày.',
+              en: 'Fast-growing, velvety colony, greyish turquoise to dark green, often with a white edge: 60–75 mm across after 7 days on CYA at 37 °C. Reverse cream to yellow.',
+              vi: 'Khuẩn lạc mọc nhanh, mịn như nhung, màu xanh ngọc xám đến lục đậm, thường có mép trắng: đường kính 60–75 mm sau 7 ngày trên môi trường CYA ở 37 °C. Mặt dưới màu kem đến vàng.',
             },
           },
           {
             label: { en: 'Under the microscope', vi: 'Dưới kính hiển vi' },
             value: {
-              en: 'Septate, colourless hyphae. Each spore-bearing stalk ends in a flask-shaped swelling with one row of phialides on its upper part.',
-              vi: 'Sợi nấm có vách ngăn, không màu. Mỗi cuống mang bào tử kết thúc bằng một phần phình hình bình, với một hàng thể bình ở nửa trên.',
+              en: 'Septate, colourless hyphae. Smooth stalks (stipes) end in a pear- to club-shaped vesicle, 10–30 µm wide, with one row of phialides on its upper part (uniseriate). The spore heads form columns.',
+              vi: 'Sợi nấm có vách ngăn, không màu. Cuống trơn kết thúc bằng một bọng hình quả lê đến hình chùy, rộng 10–30 µm, với một hàng thể bình ở nửa trên (một tầng). Các đầu bào tử xếp thành cột.',
             },
           },
           {
             label: { en: 'Spores', vi: 'Bào tử' },
             value: {
-              en: 'Round, slightly rough conidia, only about 2–3 µm across, in long chains.',
-              vi: 'Bào tử đính tròn, hơi nhám, chỉ khoảng 2–3 µm, xếp thành chuỗi dài.',
+              en: 'Globose to subglobose conidia, only about 2–3.5 µm across, smooth to finely rough, in long chains.',
+              vi: 'Bào tử đính hình cầu đến gần cầu, chỉ khoảng 2–3,5 µm, trơn đến hơi nhám, xếp thành chuỗi dài.',
+            },
+          },
+          {
+            label: { en: 'Sexual form', vi: 'Dạng hữu tính' },
+            value: {
+              en: 'Rarely seen. It only forms when two strains of opposite mating type are crossed (heterothallic).',
+              vi: 'Hiếm gặp. Chỉ hình thành khi lai hai chủng khác kiểu giao phối (dị tản).',
             },
           },
         ],
-        photos: [photos.fumigatusColony, photos.fumigatusMicro],
-        refs: ['samson2014', 'latge1999'],
+        photos: [photos.fumigatusPlate],
+        refs: ['samson2014', 'latge1999', 'westerdijk'],
       },
       physiology: {
         summary: {
@@ -140,12 +214,12 @@ export const species: SpeciesProfile[] = [
           {
             label: { en: 'Useful lab test', vi: 'Xét nghiệm hữu ích' },
             value: {
-              en: 'Growth at 50 °C helps tell it apart from most other Aspergillus species.',
-              vi: 'Khả năng mọc ở 50 °C giúp phân biệt với hầu hết các loài Aspergillus khác.',
+              en: 'Growth at 50 °C and no growth at 10 °C help tell it apart from most other Aspergillus species. It grows better at 37 °C than at 25 °C.',
+              vi: 'Mọc được ở 50 °C và không mọc ở 10 °C giúp phân biệt với hầu hết các loài Aspergillus khác. Nấm mọc ở 37 °C tốt hơn ở 25 °C.',
             },
           },
         ],
-        refs: ['latge1999'],
+        refs: ['latge1999', 'westerdijk'],
       },
       ecology: {
         summary: {
@@ -156,8 +230,8 @@ export const species: SpeciesProfile[] = [
           {
             label: { en: 'Where it lives', vi: 'Nơi sống' },
             value: {
-              en: 'Soil, compost heaps and rotting plant material. Hot compost suits it well.',
-              vi: 'Đất, đống phân ủ và vật chất thực vật đang phân hủy. Phân ủ nóng rất phù hợp với nó.',
+              en: 'Worldwide in soil, compost heaps and rotting plant material, especially warm places: heated cereals, rubbish, humidifier systems and indoor air.',
+              vi: 'Khắp thế giới trong đất, đống phân ủ và vật chất thực vật đang phân hủy, đặc biệt ở nơi ấm: ngũ cốc bị nóng lên, rác thải, hệ thống tạo ẩm và không khí trong nhà.',
             },
           },
           {
@@ -168,7 +242,7 @@ export const species: SpeciesProfile[] = [
             },
           },
         ],
-        refs: ['latge1999'],
+        refs: ['latge1999', 'westerdijk'],
       },
       chemistry: {
         summary: {
@@ -179,8 +253,15 @@ export const species: SpeciesProfile[] = [
           {
             label: { en: 'Known compounds', vi: 'Hợp chất đã biết' },
             value: {
-              en: 'Gliotoxin, which weakens immune cells, plus fumagillin and helvolic acid.',
-              vi: 'Gliotoxin, chất làm suy yếu tế bào miễn dịch, cùng fumagillin và axit helvolic.',
+              en: 'Gliotoxin, which weakens immune cells, plus fumagillin, helvolic acid, fumitremorgins, fumigaclavines, fumiquinazolines, pseurotins, trypacidin and verruculogen.',
+              vi: 'Gliotoxin, chất làm suy yếu tế bào miễn dịch, cùng fumagillin, axit helvolic, fumitremorgin, fumigaclavine, fumiquinazoline, pseurotin, trypacidin và verruculogen.',
+            },
+          },
+          {
+            label: { en: 'Important mycotoxins', vi: 'Độc tố nấm quan trọng' },
+            value: {
+              en: 'Gliotoxin, fumigaclavines, fumitremorgins A–C and verruculogen.',
+              vi: 'Gliotoxin, fumigaclavine, fumitremorgin A–C và verruculogen.',
             },
           },
           {
@@ -191,7 +272,7 @@ export const species: SpeciesProfile[] = [
             },
           },
         ],
-        refs: ['latge1999'],
+        refs: ['latge1999', 'westerdijk'],
       },
       pathogenicity: {
         summary: {
@@ -266,12 +347,19 @@ export const species: SpeciesProfile[] = [
           {
             label: { en: 'Extra barcodes', vi: 'Mã vạch bổ sung' },
             value: {
-              en: 'β-tubulin (benA) or calmodulin (CaM) genes separate the species.',
-              vi: 'Gen β-tubulin (benA) hoặc calmodulin (CaM) giúp phân biệt các loài.',
+              en: 'β-tubulin (benA), calmodulin (CaM) or RPB2 genes separate the species.',
+              vi: 'Gen β-tubulin (benA), calmodulin (CaM) hoặc RPB2 giúp phân biệt các loài.',
+            },
+          },
+          {
+            label: { en: 'Ex-type sequences', vi: 'Trình tự của chủng ex-type' },
+            value: {
+              en: 'GenBank, from CBS 133.61: ITS EF669931 · benA EF669791 · CaM EF669860 · RPB2 EF669719.',
+              vi: 'GenBank, từ CBS 133.61: ITS EF669931 · benA EF669791 · CaM EF669860 · RPB2 EF669719.',
             },
           },
         ],
-        refs: ['schoch2012', 'samson2014'],
+        refs: ['schoch2012', 'samson2014', 'westerdijk'],
       },
     },
   },
@@ -287,6 +375,17 @@ export const species: SpeciesProfile[] = [
     ],
     photo: photos.yeastColonies,
     lineage: ['Fungi', 'Ascomycota', 'Saccharomycetes', 'Saccharomycetales', 'Saccharomycetaceae', 'Saccharomyces'],
+    strains: [
+      {
+        id: 'S288C',
+        status: { en: 'Genome reference', vi: 'Chủng tham chiếu hệ gen' },
+        note: {
+          en: 'The laboratory strain whose genome was fully read in 1996. Search the catalogue for Saccharomyces cerevisiae to see the strains on offer.',
+          vi: 'Chủng phòng thí nghiệm được giải trình tự toàn bộ bộ gen năm 1996. Hãy tìm Saccharomyces cerevisiae trong danh mục để xem các chủng hiện có.',
+        },
+        inCbs: false,
+      },
+    ],
     sections: {
       identity: {
         summary: {

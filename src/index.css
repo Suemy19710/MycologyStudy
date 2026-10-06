@@ -1024,3 +1024,17 @@ footer::after {
   .ladder li:has(.tier-secondary), .ladder li:has(.tier-infraspecific) { justify-content: flex-end; }
   .rung.tier-secondary, .rung.tier-infraspecific { width: calc(100% - 18px) !important; }
 }
+
+/* ============ Species profiles: strains held in the CBS collection ============ */
+.strain-list { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
+.strain-list li { border: 1px solid var(--line); border-left: 3px solid var(--accent); border-radius: 0 var(--radius) var(--radius) 0; padding: 12px 14px; display: flex; flex-direction: column; gap: 6px; background: var(--bg); }
+.strain-id { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
+.strain-id .mono { font-size: 0.95rem; font-weight: 500; color: var(--ink); }
+.strain-list p { font-size: 0.9rem; color: var(--muted); }
+.strain-other { font-size: 0.74rem !important; overflow-wrap: anywhere; }
+.strain-order { font-size: 0.86rem; margin-top: auto; }
+.strain-all { align-self: flex-start; }
+.photo-row.n1 { max-width: 560px; }
+@media (max-width: 640px) {
+  .strain-list { grid-template-columns: minmax(0, 1fr); }
+}

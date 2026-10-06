@@ -16,7 +16,8 @@ export interface Photo {
 
 // Builds an image URL from a Commons file name. `width` asks Wikimedia for a smaller copy.
 export function photoUrl(p: Photo, width = 960) {
-  if (p.src) return p.src
+  // Local files live in /public; prefix the site's base path (e.g. /MycologyStudy/) so they load on GitHub Pages.
+  if (p.src) return p.src.startsWith('/') ? import.meta.env.BASE_URL + p.src.slice(1) : p.src
   return `https://commons.wikimedia.org/wiki/Special:FilePath/${encodeURIComponent(p.file ?? '')}?width=${width}`
 }
 
@@ -185,6 +186,22 @@ export const photos = {
     caption: { en: 'Yeast cells under an electron microscope. Round marks are scars left by earlier buds.', vi: 'Tế bào nấm men dưới kính hiển vi điện tử. Các vết tròn là sẹo do các chồi trước để lại.' },
     author: 'Mogana Das Murtey, Patchamuthu Ramasamy',
     license: 'CC BY 3.0',
+  },
+  fumigatusPlate: {
+    src: '/photos/aspergillus-fumigatus-plate.webp',
+    alt: {
+      en: 'Plate of nine images: Aspergillus fumigatus colonies on three agar plates, conidiophores with columnar spore heads, and round conidia',
+      vi: 'Bảng chín hình: khuẩn lạc Aspergillus fumigatus trên ba đĩa thạch, cuống bào tử đính với đầu bào tử hình cột, và các bào tử đính tròn',
+    },
+    caption: {
+      en: 'Aspergillus fumigatus. A–C: colonies on three culture media. D–H: conidiophores, each with a swollen vesicle carrying one row of phialides. I: conidia.',
+      vi: 'Aspergillus fumigatus. A–C: khuẩn lạc trên ba môi trường nuôi cấy. D–H: cuống bào tử đính, mỗi cuống có bọng phình mang một hàng thể bình. I: bào tử đính.',
+    },
+    // TODO: confirm the source publication and licence of this figure before publishing.
+    author: 'Westerdijk Fungal Biodiversity Institute',
+    license: 'source and licence to be confirmed',
+    ratio: '3 / 4',
+    fit: 'contain',
   },
   fusariumWilt: {
     file: 'Tomaquera amb Fusarium HV.JPG',
