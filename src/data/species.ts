@@ -14,18 +14,6 @@ export type SectionKey =
   | 'susceptibility'
   | 'dna'
 
-// Order of sections on the page, their labels, and the topic page that explains each one.
-export const sectionInfo: { key: SectionKey; label: L; topic: string }[] = [
-  { key: 'identity', label: { en: 'Identity', vi: 'Định danh' }, topic: '/learn/species-and-strain' },
-  { key: 'morphology', label: { en: 'Morphology', vi: 'Hình thái' }, topic: '/learn/morphology' },
-  { key: 'physiology', label: { en: 'Physiology', vi: 'Sinh lý' }, topic: '/learn/physiology' },
-  { key: 'ecology', label: { en: 'Ecology', vi: 'Sinh thái' }, topic: '/learn/ecology' },
-  { key: 'chemistry', label: { en: 'Chemistry', vi: 'Hóa học' }, topic: '/learn/mycotoxins' },
-  { key: 'pathogenicity', label: { en: 'Pathogenicity', vi: 'Khả năng gây bệnh' }, topic: '/learn/pathogenicity' },
-  { key: 'susceptibility', label: { en: 'Drug response', vi: 'Phản ứng với thuốc' }, topic: '/learn/antifungal-susceptibility' },
-  { key: 'dna', label: { en: 'DNA barcode', vi: 'Mã vạch DNA' }, topic: '/learn/dna-barcode' },
-]
-
 export interface Fact {
   label: L
   value: L
@@ -569,7 +557,3 @@ export const species: SpeciesProfile[] = [
     },
   },
 ]
-
-export function findSpecies(slug: string | undefined) {
-  return species.find((s) => s.slug === slug)
-}

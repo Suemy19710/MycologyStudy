@@ -1,6 +1,6 @@
 # Backend architecture and data model
 
-Status: **proposal** · Scope: Meet the Fungi (`mycologystudy`) · Last updated: 2026-10-07
+Status: **Phase 0 implemented** (static JSON + TanStack Query); database schema in `db/` ready for Phase 1 · Scope: Meet the Fungi (`mycologystudy`) · Last updated: 2026-10-07
 
 This document designs a database, an HTTP API and a data-fetching layer (TanStack Query) for the site,
 so that species profiles, strains, taxonomy, references and photos can be edited by curators instead of
@@ -115,7 +115,7 @@ erDiagram
   PHOTO ||--o{ SECTION_PHOTO : ""
   REFERENCE ||--o{ SECTION_REFERENCE : ""
   STRAIN ||--o{ STRAIN_XREF : "also held as"
-  STRAIN ||--o{ SEQUENCE : "sequenced at"
+  STRAIN ||--o{ DNA_SEQUENCE : "sequenced at"
   GLOSSARY_TERM }o--|| TERM_GROUP : "in"
 ```
 
@@ -291,7 +291,7 @@ create table strain_xref (                       -- '= NRRL 163 = ATCC 1022 ...'
   primary key (strain_id, collection, accession)
 );
 
-create table sequence (
+create table dna_sequence (   -- "sequence" is a SQL keyword, so avoided as a table name
   strain_id  uuid references strain(id) on delete cascade,
   locus      locus not null,
   genbank    text not null check (genbank ~ '^[A-Z]{1,2}[0-9]{5,8}(\.[0-9]+)?$'),

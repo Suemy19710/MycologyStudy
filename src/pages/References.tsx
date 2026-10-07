@@ -1,10 +1,13 @@
+import { useQuery } from '@tanstack/react-query'
 import { useEffect, useState } from 'react'
 import { useLocation } from 'react-router-dom'
+import { referencesQuery } from '../api/queries'
+import type { ReferenceT } from '../api/schemas'
+import { LoadError, Loading } from '../components/QueryState'
 import { photoPage, photos, type Photo } from '../data/photos'
-import { references, type ReferenceKind } from '../data/references'
 import { useLang, type L } from '../i18n/LanguageContext'
 
-const kindLabel: Record<ReferenceKind, L> = {
+const kindLabel: Record<ReferenceT['kind'], L> = {
   article: { en: 'article', vi: 'bài báo' },
   book: { en: 'book', vi: 'sách' },
   guideline: { en: 'standard', vi: 'tiêu chuẩn' },
@@ -15,6 +18,7 @@ export default function References() {
   const { t, lang } = useLang()
   const { hash } = useLocation()
   const [copied, setCopied] = useState<string | null>(null)
+  const { data, isPending, isError, refetch } = useQuery(referencesQuery())
 
   useEffect(() => {
     document.title = lang === 'vi' ? 'Tài liệu tham khảo · Làm quen với Nấm' : 'References · Meet the Fungi'
@@ -25,7 +29,7 @@ export default function References() {
     if (!hash) return
     const el = document.getElementById(hash.slice(1))
     el?.scrollIntoView({ block: 'center' })
-  }, [hash])
+  }, [hash, data])
 
   // Copy one reference as plain text (useful for your report).
   const copy = async (id: string, text: string) => {
@@ -55,8 +59,10 @@ export default function References() {
 
       <section>
         <h2 className="sub">{t({ en: 'Literature', vi: 'Tài liệu' })}</h2>
+        {isPending && <Loading />}
+        {isError && <LoadError onRetry={() => void refetch()} />}
         <ol className="ref-list">
-          {references.map((r, i) => {
+          {data?.items.map((r, i) => {
             const plain = `${r.authors} (${r.year}). ${r.title}. ${r.source}. ${r.url}`
             return (
               <li key={r.id} id={r.id} className={hash === `#${r.id}` ? 'target' : ''}>

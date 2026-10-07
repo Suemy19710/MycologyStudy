@@ -1,15 +1,22 @@
+import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { useEffect } from 'react'
 import { Link } from 'react-router-dom'
+import { speciesDetailQuery, speciesListQuery } from '../api/queries'
 import Photo from '../components/Photo'
-import { species } from '../data/species'
+import { LoadError, Loading } from '../components/QueryState'
 import { useLang } from '../i18n/LanguageContext'
 
 export default function SpeciesList() {
   const { t, lang } = useLang()
+  const queryClient = useQueryClient()
+  const { data, isPending, isError, refetch } = useQuery(speciesListQuery())
 
   useEffect(() => {
     document.title = lang === 'vi' ? 'Hồ sơ loài · Làm quen với Nấm' : 'Species profiles · Meet the Fungi'
   }, [lang])
+
+  // Start loading a profile as soon as the reader points at its card, so it opens instantly.
+  const prefetch = (slug: string) => void queryClient.prefetchQuery(speciesDetailQuery(slug))
 
   return (
     <article className="topic">
@@ -24,26 +31,38 @@ export default function SpeciesList() {
         </p>
       </header>
 
-      <div className="grid g2">
-        {species.map((s) => (
-          <Link key={s.slug} to={`/species/${s.slug}`} className="card link-card species-card">
-            <Photo photo={s.photo} ratio="16 / 10" />
-            <span className="mono tag">{t(s.form)}</span>
-            <h3>
-              <i>{s.name}</i>
-            </h3>
-            <p>{t(s.commonName)}</p>
-            <div className="badges">
-              {s.tags.map((tag) => (
-                <span key={tag.en} className="badge">
-                  {t(tag)}
-                </span>
-              ))}
-            </div>
-            <span className="ex">{t({ en: 'Open profile →', vi: 'Xem hồ sơ →' })}</span>
-          </Link>
-        ))}
-      </div>
+      {isPending ? (
+        <Loading />
+      ) : isError ? (
+        <LoadError onRetry={() => void refetch()} />
+      ) : (
+        <div className="grid g2">
+          {data.items.map((s) => (
+            <Link
+              key={s.slug}
+              to={`/species/${s.slug}`}
+              className="card link-card species-card"
+              onMouseEnter={() => prefetch(s.slug)}
+              onFocus={() => prefetch(s.slug)}
+            >
+              <Photo photo={s.photo} ratio="16 / 10" />
+              <span className="mono tag">{t(s.form)}</span>
+              <h3>
+                <i>{s.name}</i>
+              </h3>
+              <p>{t(s.commonName)}</p>
+              <div className="badges">
+                {s.tags.map((tag) => (
+                  <span key={tag.en} className="badge">
+                    {t(tag)}
+                  </span>
+                ))}
+              </div>
+              <span className="ex">{t({ en: 'Open profile →', vi: 'Xem hồ sơ →' })}</span>
+            </Link>
+          ))}
+        </div>
+      )}
 
       <p className="note-inline">
         {t({

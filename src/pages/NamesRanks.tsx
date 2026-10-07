@@ -1,10 +1,13 @@
+import { useQuery } from '@tanstack/react-query'
 import { useEffect, useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
+import { examplesQuery, glossaryQuery, ranksQuery } from '../api/queries'
+import type { ExampleFungusT, GlossaryT, RankKeyT, RankT, TermGroupT } from '../api/schemas'
 import Cite from '../components/Cite'
-import { Analogy, Toggle } from '../components/ui'
 import Photo from '../components/Photo'
-import { examples, ranks, termGroups, terms, tierLabels, type RankKey, type TermGroup } from '../data/taxonomy'
-import { useLang } from '../i18n/LanguageContext'
+import { LoadError, Loading } from '../components/QueryState'
+import { Analogy, Toggle } from '../components/ui'
+import { useLang, type L } from '../i18n/LanguageContext'
 
 // Rank words inside a name stay upright, e.g. Fusarium oxysporum f. sp. lycopersici.
 const CONNECTOR = / (subsp\.|var\.|f\. sp\.|f\.|sect\.) /
@@ -39,48 +42,15 @@ type RankView = 'main' | 'all'
 
 export default function NamesRanks() {
   const { t, lang } = useLang()
-  const [exampleKey, setExampleKey] = useState(examples[0].key)
-  const [selected, setSelected] = useState<RankKey>('species')
-  const [view, setView] = useState<RankView>('main')
-  const [query, setQuery] = useState('')
-  const [group, setGroup] = useState<TermGroup | 'all'>('all')
+  const ranksQ = useQuery(ranksQuery())
+  const examplesQ = useQuery(examplesQuery())
+  const glossaryQ = useQuery(glossaryQuery())
 
   useEffect(() => {
     document.title = lang === 'vi' ? 'Tên & bậc phân loại · Làm quen với Nấm' : 'Names & ranks · Meet the Fungi'
   }, [lang])
 
-  const example = examples.find((e) => e.key === exampleKey) ?? examples[0]
-  // Ranks this fungus uses; the main view keeps only the principal ranks plus strain.
-  const visible = ranks.filter(
-    (r) => example.names[r.key] && (view === 'all' || r.tier === 'principal' || r.tier === 'informal'),
-  )
-  const current = visible.some((r) => r.key === selected) ? selected : 'species'
-  const rank = ranks.find((r) => r.key === current)!
-  const isStrain = rank.tier === 'informal'
-  const italic = (key: RankKey) => key !== 'strain' // ICNafp: scientific names are italic at every rank
 
-  // Main ranks narrow step by step; the optional ranks sit just inside the rank above them.
-  const widths = visible.map((r, i) => {
-    const principalAbove = visible.slice(0, i + 1).filter((v) => v.tier === 'principal').length
-    const width = 100 - Math.max(0, principalAbove - 1) * 6
-    if (r.tier === 'principal' || r.tier === 'infraspecific') return width // long names below species need the room
-    return width - 5
-  })
-
-  // Search both languages, so "chủng" and "strain" both work.
-  const filtered = useMemo(() => {
-    const q = query.trim().toLowerCase()
-    return terms.filter((term) => {
-      if (group !== 'all' && term.group !== group) return false
-      if (!q) return true
-      const text = [term.term, term.meaning, term.example]
-        .filter(Boolean)
-        .flatMap((x) => [x!.en, x!.vi])
-        .join(' ')
-        .toLowerCase()
-      return text.includes(q)
-    })
-  }, [query, group])
 
   return (
     <article className="topic">
@@ -105,66 +75,13 @@ export default function NamesRanks() {
             })}
           </p>
 
-          <div className="lab">
-            <div className="lab-controls">
-              <Toggle
-                label={t({ en: 'Choose an example fungus', vi: 'Chọn loài nấm ví dụ' })}
-                value={exampleKey}
-                onChange={setExampleKey}
-                options={examples.map((e) => ({ value: e.key, label: t(e.label) }))}
-              />
-              <Toggle
-                label={t({ en: 'Which ranks to show', vi: 'Hiển thị bậc nào' })}
-                value={view}
-                onChange={setView}
-                options={[
-                  { value: 'main', label: t({ en: 'Main ranks', vi: 'Bậc chính' }) },
-                  { value: 'all', label: t({ en: 'All ranks', vi: 'Tất cả các bậc' }) },
-                ]}
-              />
-            </div>
-
-            <div className="ladder-wrap">
-              <ol className="ladder">
-                {visible.map((r, i) => (
-                  <li key={r.key}>
-                    <button
-                      type="button"
-                      className={`rung tier-${r.tier} ${r.key === current ? 'on' : ''} ${r.tier === 'informal' ? 'strain-rung' : ''}`}
-                      style={{ width: `${widths[i]}%` }}
-                      aria-pressed={r.key === current}
-                      aria-label={`${t(r.rank)} (${t(tierLabels[r.tier])}): ${example.names[r.key]}`}
-                      onClick={() => setSelected(r.key)}
-                    >
-                      <span className="rung-rank mono">{t(r.rank)}</span>
-                      <span className="rung-name">
-                        <SciName name={example.names[r.key]!} ending={r.ending} italic={italic(r.key)} />
-                      </span>
-                    </button>
-                  </li>
-                ))}
-              </ol>
-
-              <div className="rank-detail" aria-live="polite">
-                <Photo photo={example.photo} ratio="16 / 10" />
-                <span className="mono muted-label">
-                  {t(rank.rank)} · {t(tierLabels[rank.tier])}
-                </span>
-                <h3>
-                  <SciName name={example.names[current]!} ending={rank.ending} italic={italic(current)} />
-                  {current === 'species' && <span className="authority"> {example.authority}</span>}
-                </h3>
-                <p>{t(rank.what)}</p>
-                {rank.ending && (
-                  <p className="ending-tip">
-                    {t({ en: 'Fungal names at this level end in', vi: 'Tên nấm ở bậc này kết thúc bằng' })}{' '}
-                    <mark>{rank.ending}</mark>
-                  </p>
-                )}
-                {isStrain && <p className="ending-tip">{t(example.strainNote)}</p>}
-              </div>
-            </div>
-          </div>
+          {ranksQ.data && examplesQ.data ? (
+            <RankLadder ranks={ranksQ.data.items} tierLabels={ranksQ.data.tierLabels} examples={examplesQ.data.items} />
+          ) : ranksQ.isError || examplesQ.isError ? (
+            <LoadError onRetry={() => void Promise.all([ranksQ.refetch(), examplesQ.refetch()])} />
+          ) : (
+            <Loading />
+          )}
         </section>
 
         <p className="prose above-kingdom">
@@ -293,54 +210,13 @@ export default function NamesRanks() {
 
         <section id="glossary">
           <h2 className="sub">{t({ en: 'Word list', vi: 'Bảng thuật ngữ' })}</h2>
-          <div className="glossary-tools">
-            <label className="search">
-              <span className="sr-only">{t({ en: 'Search terms', vi: 'Tìm thuật ngữ' })}</span>
-              <input
-                id="term-search"
-                type="search"
-                placeholder={t({ en: 'Search a term, e.g. taxon', vi: 'Tìm thuật ngữ, VD: chủng' })}
-                value={query}
-                onChange={(e) => setQuery(e.target.value)}
-              />
-            </label>
-            <Toggle
-              label={t({ en: 'Filter terms by group', vi: 'Lọc thuật ngữ theo nhóm' })}
-              value={group}
-              onChange={setGroup}
-              options={termGroups.map((g) => ({ value: g.value, label: t(g.label) }))}
-            />
-          </div>
-
-          {filtered.length > 0 ? (
-            <div className="grid g2">
-              {filtered.map((term) => (
-                <div className="card term" key={term.term.en}>
-                  <span className="mono tag">{t(termGroups.find((g) => g.value === term.group)!.label)}</span>
-                  <h3>{t(term.term)}</h3>
-                  <p>{t(term.meaning)}</p>
-                  {term.example && (
-                    <span className="ex">
-                      {t({ en: 'e.g.', vi: 'VD:' })} {t(term.example)}
-                    </span>
-                  )}
-                </div>
-              ))}
-            </div>
+          {glossaryQ.data ? (
+            <WordList glossary={glossaryQ.data} />
+          ) : glossaryQ.isError ? (
+            <LoadError onRetry={() => void glossaryQ.refetch()} />
           ) : (
-            <p className="empty">
-              {t({
-                en: `No terms match "${query}". Try a shorter word, or choose "All".`,
-                vi: `Không có thuật ngữ nào khớp với "${query}". Hãy thử từ ngắn hơn hoặc chọn "Tất cả".`,
-              })}
-            </p>
+            <Loading />
           )}
-          <p className="note-inline">
-            {t({
-              en: `${filtered.length} of ${terms.length} terms shown`,
-              vi: `Đang hiển thị ${filtered.length} / ${terms.length} thuật ngữ`,
-            })}
-          </p>
         </section>
 
         <p className="prose">
@@ -351,5 +227,167 @@ export default function NamesRanks() {
         </p>
       </div>
     </article>
+  )
+}
+
+function RankLadder({ ranks, tierLabels, examples }: { ranks: RankT[]; tierLabels: Record<RankT['tier'], L>; examples: ExampleFungusT[] }) {
+  const { t } = useLang()
+  const [exampleKey, setExampleKey] = useState(examples[0]?.key ?? '')
+  const [selected, setSelected] = useState<RankKeyT>('species')
+  const [view, setView] = useState<RankView>('main')
+
+  const example = examples.find((e) => e.key === exampleKey) ?? examples[0]
+  // Ranks this fungus uses; the main view keeps only the principal ranks plus strain.
+  const visible = ranks.filter(
+    (r) => example.names[r.key] && (view === 'all' || r.tier === 'principal' || r.tier === 'informal'),
+  )
+  const current = visible.some((r) => r.key === selected) ? selected : 'species'
+  const rank = ranks.find((r) => r.key === current)!
+  const isStrain = rank.tier === 'informal'
+  const italic = (key: RankKeyT) => key !== 'strain' // ICNafp: scientific names are italic at every rank
+
+  // Main ranks narrow step by step; the optional ranks sit just inside the rank above them.
+  const widths = visible.map((r, i) => {
+    const principalAbove = visible.slice(0, i + 1).filter((v) => v.tier === 'principal').length
+    const width = 100 - Math.max(0, principalAbove - 1) * 6
+    if (r.tier === 'principal' || r.tier === 'infraspecific') return width // long names below species need the room
+    return width - 5
+  })
+
+  return (
+    <div className="lab">
+      <div className="lab-controls">
+        <Toggle
+          label={t({ en: 'Choose an example fungus', vi: 'Chọn loài nấm ví dụ' })}
+          value={exampleKey}
+          onChange={setExampleKey}
+          options={examples.map((e) => ({ value: e.key, label: t(e.label) }))}
+        />
+        <Toggle
+          label={t({ en: 'Which ranks to show', vi: 'Hiển thị bậc nào' })}
+          value={view}
+          onChange={setView}
+          options={[
+            { value: 'main', label: t({ en: 'Main ranks', vi: 'Bậc chính' }) },
+            { value: 'all', label: t({ en: 'All ranks', vi: 'Tất cả các bậc' }) },
+          ]}
+        />
+      </div>
+
+      <div className="ladder-wrap">
+        <ol className="ladder">
+          {visible.map((r, i) => (
+            <li key={r.key}>
+              <button
+                type="button"
+                className={`rung tier-${r.tier} ${r.key === current ? 'on' : ''} ${r.tier === 'informal' ? 'strain-rung' : ''}`}
+                style={{ width: `${widths[i]}%` }}
+                aria-pressed={r.key === current}
+                aria-label={`${t(r.rank)} (${t(tierLabels[r.tier])}): ${example.names[r.key]}`}
+                onClick={() => setSelected(r.key)}
+              >
+                <span className="rung-rank mono">{t(r.rank)}</span>
+                <span className="rung-name">
+                  <SciName name={example.names[r.key]!} ending={r.ending} italic={italic(r.key)} />
+                </span>
+              </button>
+            </li>
+          ))}
+        </ol>
+
+        <div className="rank-detail" aria-live="polite">
+          <Photo photo={example.photo} ratio="16 / 10" />
+          <span className="mono muted-label">
+            {t(rank.rank)} · {t(tierLabels[rank.tier])}
+          </span>
+          <h3>
+            <SciName name={example.names[current]!} ending={rank.ending} italic={italic(current)} />
+            {current === 'species' && <span className="authority"> {example.authority}</span>}
+          </h3>
+          <p>{t(rank.what)}</p>
+          {rank.ending && (
+            <p className="ending-tip">
+              {t({ en: 'Fungal names at this level end in', vi: 'Tên nấm ở bậc này kết thúc bằng' })}{' '}
+              <mark>{rank.ending}</mark>
+            </p>
+          )}
+          {isStrain && <p className="ending-tip">{t(example.strainNote)}</p>}
+        </div>
+      </div>
+    </div>
+  )
+}
+
+function WordList({ glossary }: { glossary: GlossaryT }) {
+  const { t } = useLang()
+  const [query, setQuery] = useState('')
+  const [group, setGroup] = useState<TermGroupT | 'all'>('all')
+
+  // Search both languages, so "chủng" and "strain" both work.
+  const filtered = useMemo(() => {
+    const q = query.trim().toLowerCase()
+    return glossary.items.filter((term) => {
+      if (group !== 'all' && term.group !== group) return false
+      if (!q) return true
+      const text = [term.term, term.meaning, term.example]
+        .filter(Boolean)
+        .flatMap((x) => [x!.en, x!.vi])
+        .join(' ')
+        .toLowerCase()
+      return text.includes(q)
+    })
+  }, [glossary, query, group])
+
+  return (
+    <>
+      <div className="glossary-tools">
+        <label className="search">
+          <span className="sr-only">{t({ en: 'Search terms', vi: 'Tìm thuật ngữ' })}</span>
+          <input
+            id="term-search"
+            type="search"
+            placeholder={t({ en: 'Search a term, e.g. taxon', vi: 'Tìm thuật ngữ, VD: chủng' })}
+            value={query}
+            onChange={(e) => setQuery(e.target.value)}
+          />
+        </label>
+        <Toggle
+          label={t({ en: 'Filter terms by group', vi: 'Lọc thuật ngữ theo nhóm' })}
+          value={group}
+          onChange={setGroup}
+          options={glossary.groups.map((g) => ({ value: g.value, label: t(g.label) }))}
+        />
+      </div>
+
+      {filtered.length > 0 ? (
+        <div className="grid g2">
+          {filtered.map((term) => (
+            <div className="card term" key={term.term.en}>
+              <span className="mono tag">{t(glossary.groups.find((g) => g.value === term.group)!.label)}</span>
+              <h3>{t(term.term)}</h3>
+              <p>{t(term.meaning)}</p>
+              {term.example && (
+                <span className="ex">
+                  {t({ en: 'e.g.', vi: 'VD:' })} {t(term.example)}
+                </span>
+              )}
+            </div>
+          ))}
+        </div>
+      ) : (
+        <p className="empty">
+          {t({
+            en: `No terms match "${query}". Try a shorter word, or choose "All".`,
+            vi: `Không có thuật ngữ nào khớp với "${query}". Hãy thử từ ngắn hơn hoặc chọn "Tất cả".`,
+          })}
+        </p>
+      )}
+      <p className="note-inline">
+        {t({
+          en: `${filtered.length} of ${glossary.items.length} terms shown`,
+          vi: `Đang hiển thị ${filtered.length} / ${glossary.items.length} thuật ngữ`,
+        })}
+      </p>
+    </>
   )
 }

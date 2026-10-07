@@ -1,25 +1,31 @@
+import { useQuery } from '@tanstack/react-query'
 import { useEffect } from 'react'
 import { Link, useParams } from 'react-router-dom'
+import { isNotFound, speciesDetailQuery, speciesListQuery, speciesStrainsQuery } from '../api/queries'
 import Cite, { Sources } from '../components/Cite'
 import Photo, { PhotoRow } from '../components/Photo'
-import { cbsCatalogue, findSpecies, sectionInfo, species } from '../data/species'
+import { LoadError, Loading } from '../components/QueryState'
+import { sectionInfo } from '../content/profileSections'
 import { useLang } from '../i18n/LanguageContext'
 import NotFound from './NotFound'
 
 export default function SpeciesProfile() {
-  const { slug } = useParams()
+  const { slug = '' } = useParams()
   const { t, lang } = useLang()
-  const sp = findSpecies(slug)
+  const { data: sp, error, isPending, refetch } = useQuery(speciesDetailQuery(slug))
+  const { data: list } = useQuery(speciesListQuery()) // for "Compare with"; usually cached already
 
   useEffect(() => {
     if (sp) document.title = `${sp.name} · ${lang === 'vi' ? 'Làm quen với Nấm' : 'Meet the Fungi'}`
   }, [sp, lang])
 
-  if (!sp) return <NotFound />
+  if (isPending) return <Loading />
+  if (isNotFound(error)) return <NotFound />
+  if (!sp) return <LoadError onRetry={() => void refetch()} />
 
   // Every reference used anywhere in this profile, without duplicates.
   const allRefs = [...new Set(sectionInfo.flatMap((s) => sp.sections[s.key].refs))]
-  const others = species.filter((s) => s.slug !== sp.slug)
+  const others = (list?.items ?? []).filter((s) => s.slug !== sp.slug)
 
   const jumpTo = (key: string) => document.getElementById(`sec-${key}`)?.scrollIntoView({ behavior: 'smooth', block: 'start' })
 
@@ -95,41 +101,7 @@ export default function SpeciesProfile() {
         })}
       </div>
 
-      <section id="sec-strains" className="profile-section strains-section">
-        <div className="ps-head">
-          <span className="field">{t({ en: 'Strains', vi: 'Chủng' })}</span>
-        </div>
-        <h2>
-          {t({
-            en: 'Living cultures of this species, kept and sold by the CBS collection of the Westerdijk Institute.',
-            vi: 'Các mẫu nuôi cấy sống của loài này, được lưu giữ và cung cấp bởi bộ sưu tập CBS của Viện Westerdijk.',
-          })}{' '}
-          <Cite ids={['westerdijk']} />
-        </h2>
-        <ul className="strain-list">
-          {sp.strains.map((st) => (
-            <li key={st.id}>
-              <div className="strain-id">
-                <span className="mono">{st.id}</span>
-                <span className="badge">{t(st.status)}</span>
-              </div>
-              <p>{t(st.note)}</p>
-              {st.otherIds && <p className="mono strain-other">= {st.otherIds}</p>}
-              {st.inCbs && (
-                <a href={cbsCatalogue} target="_blank" rel="noreferrer" className="strain-order">
-                  {t({ en: `Order: search ${st.id} in the CBS catalogue`, vi: `Đặt mua: tìm ${st.id} trong danh mục CBS` })} ↗
-                </a>
-              )}
-            </li>
-          ))}
-        </ul>
-        <a href={cbsCatalogue} target="_blank" rel="noreferrer" className="btn ghost strain-all">
-          {t({ en: `Search all ${sp.name} strains at wi.knaw.nl`, vi: `Tìm tất cả chủng ${sp.name} tại wi.knaw.nl` })} ↗
-        </a>
-        <Link to="/learn/species-and-strain" className="ps-link">
-          {t({ en: 'What is a strain?', vi: 'Chủng là gì?' })} →
-        </Link>
-      </section>
+      <StrainsSection slug={sp.slug} name={sp.name} />
 
       <Sources ids={allRefs} />
 
@@ -150,5 +122,57 @@ export default function SpeciesProfile() {
         </section>
       )}
     </article>
+  )
+}
+
+// Strains load separately from the profile, so this section can show its own loading state.
+function StrainsSection({ slug, name }: { slug: string; name: string }) {
+  const { t } = useLang()
+  const { data, isPending, isError, refetch } = useQuery(speciesStrainsQuery(slug))
+
+  return (
+    <section id="sec-strains" className="profile-section strains-section">
+      <div className="ps-head">
+        <span className="field">{t({ en: 'Strains', vi: 'Chủng' })}</span>
+      </div>
+      <h2>
+        {t({
+          en: 'Living cultures of this species, kept and sold by the CBS collection of the Westerdijk Institute.',
+          vi: 'Các mẫu nuôi cấy sống của loài này, được lưu giữ và cung cấp bởi bộ sưu tập CBS của Viện Westerdijk.',
+        })}{' '}
+        <Cite ids={['westerdijk']} />
+      </h2>
+      {isPending ? (
+        <Loading />
+      ) : isError ? (
+        <LoadError onRetry={() => void refetch()} />
+      ) : (
+        <>
+          <ul className="strain-list">
+            {data.items.map((st) => (
+              <li key={st.id}>
+                <div className="strain-id">
+                  <span className="mono">{st.id}</span>
+                  <span className="badge">{t(st.status)}</span>
+                </div>
+                <p>{t(st.note)}</p>
+                {st.otherIds && <p className="mono strain-other">= {st.otherIds}</p>}
+                {st.inCbs && (
+                  <a href={data.catalogueUrl} target="_blank" rel="noreferrer" className="strain-order">
+                    {t({ en: `Order: search ${st.id} in the CBS catalogue`, vi: `Đặt mua: tìm ${st.id} trong danh mục CBS` })} ↗
+                  </a>
+                )}
+              </li>
+            ))}
+          </ul>
+          <a href={data.catalogueUrl} target="_blank" rel="noreferrer" className="btn ghost strain-all">
+            {t({ en: `Search all ${name} strains at wi.knaw.nl`, vi: `Tìm tất cả chủng ${name} tại wi.knaw.nl` })} ↗
+          </a>
+        </>
+      )}
+      <Link to="/learn/species-and-strain" className="ps-link">
+        {t({ en: 'What is a strain?', vi: 'Chủng là gì?' })} →
+      </Link>
+    </section>
   )
 }
